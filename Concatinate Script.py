@@ -8,7 +8,7 @@ Created on Fri Aug  2 15:40:42 2019
 import glob
 import pandas as pd
 
-path = r'\\isad.isadroot.ex.ac.uk\UOE\User\Desktop\ROS Measures Dev\tables'
+path = 'tables'
 filelist = glob.glob(path + "/*.csv")
 print(filelist)
 li = []
