@@ -9,7 +9,7 @@ from pandas import io
 import csv
 
 fileinput = '_Concatinated Results.csv'
-output_folder = r'E:\CYM-5442 H2DCFDA S. aureus ROS Assays\2019-07-09 S. aureus H2DCFDA Rep 1\2019-07-09 Analysis'
+output_folder = 'stats'
 df = pd.read_csv(fileinput, header = 0)
 
 """
@@ -17,23 +17,45 @@ df = pd.read_csv(fileinput, header = 0)
 for col in df.columns: 
     print (col)
 """
-
 #list of conditions - note that SA + represents the H2DCFDA -ve control - couldn't find it anyother way!
 conditionlist = ["Con 1", "Con 2", "Con 3", "CYM 1", 
-                 "CYM 2", "CYM 3", "SA +"]
-#identifyer of condition we are using to standardize to
-normalizedidentifyer = "SA +"
-#identify mean and median of normalized conditions
-normalize_df = df[df['filename'].str.contains(normalizedidentifyer)]
-meannormalize_df = normalize_df.loc[:,"mean intensity"].mean()
-mediannormalize_df = normalize_df.loc[:,"mean intensity"].median()
+                 "CYM 2", "CYM 3", "sa + h2dcfda - 1","sa + h2dcfda - 2"]
+
+#identifyer of condition we are using to standardize to - we have two normalization controls in this experiment so
+#have adjusted the code below to reflect this
+normalizedidentifyer1 = "sa + h2dcfda - 1"
+normalizedidentifyer2 = "sa + h2dcfda - 2"
+# note use of regex=False; having regex = True prevented identifying the normalized conditions
+# tbh not entirely sure why. 
+normalized1 = df[df['filename'].str.contains(normalizedidentifyer1, regex = False)]
+normalized2 = df[df['filename'].str.contains(normalizedidentifyer2, regex = False)]
+
+meannormalized1 = normalized1.loc[:,"mean intensity"].mean()
+meannormalized2 = normalized2.loc[:,"mean intensity"].mean()
+print ('meannormalized1 {}'.format(meannormalized1))
+print ('meannormalized2 {}'.format(meannormalized2))
+mediannormalized1 = normalized1.loc[:,"mean intensity"].median()
+mediannormalized2 = normalized2.loc[:,"mean intensity"].median()
+print ('mediannormalized1 {}'.format(mediannormalized1))
+print ('mediannormalized2 {}'.format(mediannormalized2))
+
+#identify mean and median of normalized  conditions by adding the two normalized
+# and dividing by two
+
+meannormalize_df = (meannormalized1 + meannormalized2) / 2
+mediannormalize_df = (mediannormalized1 + mediannormalized2) / 2
+
+print('mediannormalize_df={}'.format(mediannormalize_df))
+print('meannormalize_df={}'.format(meannormalize_df))
+
+
 # empty list of summary stats
 summarystatslist = [["condition", "mean-mean intensity", "normalized mean-mean intensity",
                      "median-mean intensity", "normalized median-mean intensity", "mean bacterial area",
                     "median bacterial area", "bacterial mean-mean intensity", "bacterial median-mean intensity"]]
 for condition in conditionlist:
     statslist = []
-    workingdf = df[df['filename'].str.contains(condition)]
+    workingdf = df[df['filename'].str.contains(condition, regex = False)]
     meanmeasure = workingdf.loc[:,"mean intensity"].mean()
     normalizedmean = (meanmeasure - meannormalize_df)
     medianmeasure = workingdf.loc[:,"mean intensity"].median()
@@ -49,13 +71,10 @@ print (summarystatslist)
 
 # convert summarystatslist to a df
 summarydf = pd.DataFrame.from_records(summarystatslist)
-# change SA+ to SA+H3DCFDA to better identify control condition
-summarydf_nameadjusted = summarydf.replace('SA +' , 'SA + H2DCFDA -ve')
-print(summarydf_nameadjusted)
+print (summarydf)
 
-exportdftocsv = summarydf_nameadjusted.to_csv("{}/summaryResults.csv".format(output_folder))
-
-#now find a way to get averages of Con and CYM into a final DF
+#Export summarydf
+exportdftocsv = summarydf.to_csv("{}/summaryResults.csv".format(output_folder))
 
 #file_out = open("{}/stats_table.csv".format(output_folder), "w")
 #writer = csv.writer(file_out)
